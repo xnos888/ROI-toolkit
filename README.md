@@ -1,4 +1,4 @@
-# pe-roi-toolkit
+# ROI-toolkit
 
 > **v2.0** — 4-skill PE Roadmap ROI toolkit. Defendable per-feature business cases that survive CFO/board scrutiny, optimized to ~37% lower token cost vs the single-skill v1.
 
@@ -37,19 +37,19 @@ The original `business-case-modeling` skill (v1.0) was a single 545-line skill t
 ```bash
 # 1. Clone or extract this folder somewhere outside your project
 # 2. Add as a local marketplace
-claude /plugin marketplace add /path/to/pe-roi-toolkit
+claude /plugin marketplace add /path/to/ROI-toolkit
 
 # 3. Install
-claude /plugin install pe-roi-toolkit
+claude /plugin install ROI-toolkit
 ```
 
 ### Claude Code (git marketplace)
 
 ```bash
 # After publishing to GitHub:
-claude /plugin marketplace add https://github.com/your-org/pe-roi-toolkit
+claude /plugin marketplace add https://github.com/xnos888/ROI-toolkit
 
-claude /plugin install pe-roi-toolkit
+claude /plugin install ROI-toolkit
 ```
 
 ### Cowork

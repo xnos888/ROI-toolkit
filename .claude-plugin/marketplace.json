@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "pe-roi-toolkit",
+  "name": "ROI-toolkit",
   "version": "2.0.0",
   "owner": {
     "name": "Kim (BU PE)",
@@ -11,7 +11,7 @@
   },
   "plugins": [
     {
-      "name": "pe-roi-toolkit",
+      "name": "ROI-toolkit",
       "source": ".",
       "description": "ROI lifecycle toolkit: roi-build (new feature), roi-adjust (modify with cascade), roi-deep-review (CFO+HoP audit), roi-portfolio (master rollup + Phase Plan + KILL/DEFER).",
       "category": "product-management",
