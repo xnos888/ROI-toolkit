@@ -3,8 +3,7 @@
   "name": "ROI-toolkit",
   "version": "2.0.0",
   "owner": {
-    "name": "Kim (BU PE)",
-    "email": "doltharit@senestia.com"
+    "name": "xnos888"
   },
   "metadata": {
     "description": "Defendable per-feature ROI toolkit for healthcare Patient Engagement (PE) roadmaps. 4 specialized skills covering build / adjust / deep-review / portfolio lifecycle. ~37% lower token cost vs single-skill v1, 71% bug-catch rate preserved."
