@@ -1,0 +1,324 @@
+# Business Case Modeling — Input Form Template
+# 
+# Copy this file, fill in values, save as <feature_code>_inputs.yaml
+# Then convert to JSON and run: python build_roi_workbook.py inputs.json /output/dir
+#
+# All fields with comments explaining purpose. Required fields marked [REQUIRED].
+# Optional fields can be omitted (skill will use defaults or auto-detect).
+
+feature:
+  code: "MED-1.0.3"  # [REQUIRED] Short identifier
+  name: "Refill Alert"  # [REQUIRED] Display name
+  category: "Medication"  # auto-detected if omitted
+  scope: "เตือนเมื่อยาใกล้หมด + แนะนำ refill (in-app + LINE)"
+  owner: "Kim (PM)"
+  status: "Discovery → ROI Assessment"
+  date: "2026-05-04"
+  problem: "ยาหมดก่อนนัดครั้งต่อไป → ผู้ป่วย NCD ขาดยา → revisit unscheduled"  # [REQUIRED]
+  what_it_does: "Track ยาจ่าย → คำนวณวันยาหมด → แจ้งเตือน 7/3/1 วันก่อน + suggest refill"
+
+# Driver tree as multiline string (will appear in Sheet 1 + 3)
+driver_tree: |
+  REFILL ALERT VALUE
+  ├── REVENUE: Effective VN × Refill conversion (D1) × Incremental % (D2) × Avg refill revenue (D7)
+  ├── COST AVOIDANCE: Effective VN × ER avoidance rate (D3) × Cost per ER event (D4)
+  └── OPS SAVINGS: Refill alerts sent × Nurse call reduction (D5) × Nurse time × Nurse cost/min
+
+primary_outcome: "Refill conversion rate (% of alerts → refill action ภายใน 14 days)"
+secondary_metrics: "(1) Repeat OPD visit rate, (2) Days-on-medication, (3) Nurse call volume"
+hypothesis: "ถ้าเตือนยาใกล้หมด → 30-50% ของ alert convert เป็น refill"
+
+# Cagan 4 Risks assessment
+cagan_risks:
+  Value Risk: "MEDIUM — ผู้ป่วย NCD บอกว่าลืมเอายาเก่ามา (need user interview confirm)"
+  Usability Risk: "LOW — push notification + LINE มี UX standard"
+  Feasibility Risk: "MEDIUM — ต้อง integrate กับ Pharmacy data"
+  Viability Risk: "LOW — ROI defendable"
+
+# === BASELINE DATA ===
+# These appear in Sheet 2 as reference data. CFs can reference these via "=ref:metric_name"
+baseline:
+  - metric: "Total VN per year"
+    value: 1304162
+    unit: "VN"
+    source: "Hospital_Baseline_DB"
+  - metric: "Avg Revenue per OPD VN"
+    value: 3000
+    unit: "THB"
+    source: "Hospital_Baseline_DB"
+  - metric: "NCD-related VN per year"
+    value: 326041
+    unit: "VN/yr"
+    source: "~25% of total VN"
+  - metric: "Avg refill cycles per NCD/year"
+    value: 6
+    unit: "cycles/yr"
+    source: "Bi-monthly NCD standard"
+  - metric: "Nurse call handling time"
+    value: 8
+    unit: "min/call"
+    source: "Estimate"
+  - metric: "Avg Revenue per Refill OPD visit"
+    value: 2200
+    unit: "THB"
+    source: "Lower than full visit"
+
+# === TAM-SAM-SOM ===
+tam_sam_som:
+  tam:
+    label: "TAM: NCD VN ที่อาจใช้ Refill Alert"
+    worst: "=ref:NCD-related VN per year"  # reference to baseline row
+    base: "=ref:NCD-related VN per year"
+    best: "=ref:NCD-related VN per year"
+    unit: "VN/yr"
+    source: "From baseline"
+  
+  sam_filters:
+    - label: "% NCD ที่ active SPC user"
+      worst: 0.20
+      base: 0.30
+      best: 0.40
+      source: "Verified SPC = 24% overall"
+    - label: "% opt-in for Refill notification"
+      worst: 0.50
+      base: 0.65
+      best: 0.80
+      source: "Express Scripts US benchmark"
+
+  som_y1:
+    worst: 0.30
+    base: 0.50
+    best: 0.70
+    source: "Y1 ramp"
+  som_y2:
+    worst: 0.50
+    base: 0.70
+    best: 0.85
+  som_y3:
+    worst: 0.65
+    base: 0.80
+    best: 0.90
+
+# === CONVERSION FACTORS ===
+conversion_factors:
+  - id: D1
+    label: "D1: Refill conversion (alert → action)"
+    worst: 0.20
+    base: 0.35
+    best: 0.50
+    format: "pct"
+    tier: "T3"
+    source: "SOVDOC 20-40% no-show proxy. Discount US→TH 50%."
+    primary: true
+
+  - id: D2
+    label: "D2: % incremental (would not refill w/o alert)"
+    worst: 0.30
+    base: 0.50
+    best: 0.70
+    format: "pct"
+    tier: "T3"
+    source: "Conservative judgment — separate incremental from base"
+
+  - id: D3
+    label: "D3: ER/IPD avoidance per refill alert"
+    worst: 0.005
+    base: 0.015
+    best: 0.030
+    format: "pct"
+    tier: "T4"
+    source: "Heavy proxy from US adherence studies"
+
+  - id: D4
+    label: "D4: Cost per ER/IPD event avoided (THB)"
+    worst: 8000
+    base: 15000
+    best: 25000
+    format: "currency"
+    tier: "T3"
+    source: "Mix ER (3-5K) + IPD (30-50K). NOT hospital revenue."
+
+  - id: D5
+    label: "D5: Nurse call reduction per refill alert"
+    worst: 0.05
+    base: 0.10
+    best: 0.15
+    format: "pct"
+    tier: "T4"
+    source: "Estimate — verify via call center log"
+
+  - id: D6
+    label: "D6: Nurse cost per minute (THB)"
+    worst: 3.3
+    base: 3.3
+    best: 3.3
+    format: "currency"
+    tier: "T1"
+    source: "35K/month ÷ 22 days ÷ 8h ÷ 60min"
+
+  - id: D7
+    label: "D7: Avg revenue per refill visit"
+    worst: "=ref:Avg Revenue per Refill OPD visit"
+    base: "=ref:Avg Revenue per Refill OPD visit"
+    best: "=ref:Avg Revenue per Refill OPD visit"
+    format: "currency"
+    tier: "T1"
+    source: "From baseline"
+
+# === VALUE COMPONENTS ===
+# Define the calculation chain — how to combine effective VN with CFs to get value
+value_components:
+  - name: "A. Revenue from incremental refill visits"
+    steps:
+      - label: "Refills triggered by alert"
+        type: "multiply_cf"
+        cf_id: "D1"
+        note: "= Eff VN × D1"
+      - label: "Incremental refills"
+        type: "multiply_cf"
+        cf_id: "D2"
+        note: "× D2"
+      - label: "Revenue from incremental (THB)"
+        type: "multiply_cf"
+        cf_id: "D7"
+        output_currency: true
+        note: "× D7 avg revenue"
+
+  - name: "B. ER/IPD cost avoidance (system-level, not hospital revenue)"
+    steps:
+      - label: "ER/IPD events avoided"
+        type: "multiply_cf"
+        cf_id: "D3"
+        note: "= Eff VN × D3"
+      - label: "Cost avoidance value (THB)"
+        type: "multiply_cf"
+        cf_id: "D4"
+        output_currency: true
+        note: "× D4 cost/event"
+
+  - name: "C. Nurse call time saved (ops cost saving)"
+    steps:
+      - label: "Calls prevented"
+        type: "multiply_cf"
+        cf_id: "D5"
+        note: "= Eff VN × D5"
+      - label: "Time saved (min)"
+        type: "multiply_baseline"
+        metric: "Nurse call handling time"
+        note: "× call time"
+      - label: "Ops savings (THB)"
+        type: "multiply_cf"
+        cf_id: "D6"
+        output_currency: true
+        note: "× cost/min"
+
+# === CONFIDENCE TIER (metadata) + STRATEGIC FIT (Priority Score input) ===
+# v1.1: Tier เป็น metadata only — ไม่ multiply ใน value calc
+confidence:
+  tier: "T3"
+  reason: "Industry benchmark with geo proxy"
+
+# v1.1: Strategic Fit ใช้สำหรับ Priority Score (roadmap ranking) — never multiplied into Pure ROI
+strategic_fit:
+  multiplier: 1.20
+  reason: "Cost-saving ✓ | Catch-up ✓ | Patient retention ✓"
+
+# === EFFORT & COST ===
+effort:
+  md_cost: 24000
+  ma_rate: 0.30
+  breakdown:
+    - role: "PM (discovery + spec + UAT)"
+      worst: 12
+      base: 8
+      best: 6
+      note: "Refill workflow + spec"
+    - role: "PD (design + research)"
+      worst: 10
+      base: 8
+      best: 6
+      note: "Notification UX"
+    - role: "SWE Backend (Pharmacy integration)"
+      worst: 30
+      base: 22
+      best: 16
+      note: "CRITICAL — depends on HIS"
+    - role: "SWE Frontend (App + LINE)"
+      worst: 18
+      base: 14
+      best: 10
+    - role: "SWE Notification engine"
+      worst: 12
+      base: 8
+      best: 6
+    - role: "QA"
+      worst: 10
+      base: 7
+      best: 5
+    - role: "App Specialist (training)"
+      worst: 8
+      base: 5
+      best: 3
+
+# === FLAGGED ASSUMPTIONS (Sheet 6) ===
+flagged_assumptions:
+  - assumption: "NCD VN = 25% of total VN"
+    value: "326,041 VN"
+    tier: "T3"
+    source: "Thai NCD prevalence estimate"
+    verification: "Pull from HIS by ICD-10"
+  - assumption: "Refill conversion rate"
+    value: "35%"
+    tier: "T3"
+    source: "SOVDOC US, discounted"
+    verification: "A/B test pilot 1 branch × 3 months"
+  # ... more as needed
+
+# === RISKS (Sheet 6) ===
+risks:
+  - risk: "Pharmacy data integration delayed"
+    impact: "HIGH"
+    likelihood: "MEDIUM"
+    mitigation: "Engineering spike Week 1-2 before commit"
+  - risk: "Refill conversion <20% (below Worst)"
+    impact: "HIGH (ROI < 1)"
+    likelihood: "MEDIUM"
+    mitigation: "Pilot 1 branch first; test push timing"
+  - risk: "NCD elderly low SPC adoption"
+    impact: "HIGH"
+    likelihood: "MEDIUM-HIGH"
+    mitigation: "Caregiver proxy + LINE-only fallback"
+
+# === VALIDATION PLAN (Sheet 6) ===
+validation_plan:
+  - time: "Week 4"
+    indicator: "Pharmacy data integration POC"
+    target: "Complete"
+    kill: "Not complete → kill"
+  - time: "Month 2"
+    indicator: "Notification opt-in rate"
+    target: ">50%"
+    kill: "<25%"
+  - time: "Month 3"
+    indicator: "Refill conversion (pilot)"
+    target: ">25%"
+    kill: "<15%"
+  - time: "Month 6"
+    indicator: "Nurse call reduction"
+    target: ">5%"
+    kill: "0%"
+
+# === POST-LAUNCH TRACKING (Sheet 5) ===
+post_launch_tracking:
+  - metric: "Refill conversion rate"
+    predicted: "35% (Base D1)"
+    source: "App analytics, monthly"
+  - metric: "Adoption rate (NCD users)"
+    predicted: "30% Y1 (Base SOM)"
+    source: "SPC user analytics"
+  - metric: "Nurse call reduction"
+    predicted: "10% (Base D5)"
+    source: "Call center log"
+  - metric: "ER/Unscheduled visit rate"
+    predicted: "1.5% (Base D3)"
+    source: "HIS — compare cohort"

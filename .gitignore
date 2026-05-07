@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Project artifacts that shouldn't be in plugin distribution
+*.bak
+*.bak.*
+*.stale
+*.pre-*
+
+# Workspace pollution
+.claude/
+session_*.md
+
+# Logs
+*.log
+npm-debug.log*

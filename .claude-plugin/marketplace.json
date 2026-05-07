@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "pe-roi-toolkit",
+  "version": "2.0.0",
+  "owner": {
+    "name": "Kim (BU PE)",
+    "email": "doltharit@senestia.com"
+  },
+  "metadata": {
+    "description": "Defendable per-feature ROI toolkit for healthcare Patient Engagement (PE) roadmaps. 4 specialized skills covering build / adjust / deep-review / portfolio lifecycle. ~37% lower token cost vs single-skill v1, 71% bug-catch rate preserved."
+  },
+  "plugins": [
+    {
+      "name": "pe-roi-toolkit",
+      "source": ".",
+      "description": "ROI lifecycle toolkit: roi-build (new feature), roi-adjust (modify with cascade), roi-deep-review (CFO+HoP audit), roi-portfolio (master rollup + Phase Plan + KILL/DEFER).",
+      "category": "product-management",
+      "keywords": ["roi", "business-case", "healthcare", "cagan", "phase-plan"]
+    }
+  ]
+}

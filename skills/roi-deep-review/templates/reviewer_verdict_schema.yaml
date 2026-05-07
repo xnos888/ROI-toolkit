@@ -1,0 +1,101 @@
+# Reviewer Verdict Schema (canonical)
+#
+# Every CFO + HoP review MUST end with a `verdict_block:` YAML fenced block
+# matching this schema. The orchestrator (review_loop.py) parses it.
+#
+# Reviews missing this block, or with invalid YAML, are treated as REJECT
+# with severity=CRITICAL (forces re-review on next iteration).
+
+verdict_block:
+  reviewer: cfo            # required: cfo | hop
+  iteration: 1             # required: 1-based iter counter
+  feature_code: APT-2.0    # required: feature code being reviewed
+
+  # Verdict gate — only two values allowed (CONDITIONAL is deprecated)
+  verdict: APPROVE         # required: APPROVE | REJECT
+                            # APPROVE = methodological correctness, not financial threshold.
+                            # Honest-low ROI APPROVES if math is correct.
+                            # REJECT only if ≥1 CRITICAL or ≥1 HIGH issue exists.
+
+  verdict_basis: "math correct, low ROI is honest"  # required: 1-line rationale (<200 chars)
+
+  # Issue list — empty list allowed (= clean review)
+  issues:
+    - id: I1                                         # required: stable id within review (I1, I2, ...)
+      severity: CRITICAL                             # required: CRITICAL | HIGH | MEDIUM | LOW
+      category: model_bug                            # required: see categories below
+      cell_ref: "3_Value_Calc!B11"                   # required: workbook cell OR inputs.json field path
+      description: "Y2 retention component computed in Y1 row"  # required: ≤300 chars
+
+      auto_fixable: true                             # required: true | false
+                                                       # true ONLY if fix can be expressed via the apply_fixes.py whitelist.
+                                                       # Reviewer marking auto_fixable: true on a forbidden field
+                                                       # → apply_fixes rejects → next iter the issue re-raised
+                                                       # (whitelist-laundering protection).
+
+      fix_instruction:                               # REQUIRED if auto_fixable: true
+        type: timing_correction                      # one of: formula_correction | unit_conversion |
+                                                       #         filter_addition | timing_correction |
+                                                       #         cost_addition | cost_avoidance_split
+        target_field: "value_components[0].steps[2].applies_to_year"
+                                                       # MUST be a path inside the apply_fixes whitelist
+        new_value: 2                                  # type-dependent
+        rationale: "D2 is Y2 retention uplift; should not sum into Y1"
+                                                       # ≤200 chars
+
+      human_action: null                              # REQUIRED if auto_fixable: false
+                                                       # ≤300 chars describing what human needs to do
+                                                       # (e.g., "Conduct 5+ patient interviews on D1 acceptance rate")
+
+    - id: I2
+      severity: HIGH
+      category: discovery_debt
+      cell_ref: "1_Feature_Info"
+      description: "0 patient interviews documented for NCD elderly cohort"
+      auto_fixable: false
+      human_action: "Conduct 5+ NCD elderly interviews; verify D1 acceptance assumption before commit"
+
+  # Iteration awareness — REQUIRED on iter ≥ 2
+  iteration_check:
+    prior_iter: 1                                   # most recent prior iter
+    fixes_verified:                                 # list prior CRITICAL/HIGH that this iter confirms FIXED
+      - "I1 (iter 1): timing fixed correctly in B11+C11+D11; values now match D5 component"
+    fixes_unresolved:                               # list prior CRITICAL/HIGH that remain unaddressed
+      - "I3 (iter 1): cost-avoidance vs revenue split still missing in `5_Output`"
+    new_issues_found:                               # new issues introduced by this iter's fixes
+      - "I4: fix to B11 broke ref in B14 (cascade error)"
+    softened_verdicts:                              # if any prior issue downgraded — MUST justify
+      - issue_id: "I2 (iter 1)"
+        prior_severity: HIGH
+        new_severity: MEDIUM
+        justification: "Reviewer overstated discovery debt — original problem statement DOES cite Synphaet survey 89% as proxy evidence; downgrading to MEDIUM"
+
+# Severity rubric (canonical — reviewers MUST follow)
+#
+# 🔴 CRITICAL: provable math/cell/structural error, mechanically patchable
+#    → blocks APPROVE, auto-fixable when target_field in whitelist
+#    Examples: wrong cell ref, double-count cohort×visit, RF-08 unit mismatch,
+#    Y2 component in Y1, missing RF-04 split, formula error #REF!
+#
+# 🟠 HIGH: load-bearing assumption with no source / discovery debt invalidates
+#    Value-risk CF / material cost gap requiring research
+#    → blocks APPROVE, NOT auto-fixable (must escalate to human)
+#    Examples: 0 customer interviews on D1, T1 claimed but actually T4,
+#    training/infra cost reviewer can't quantify without research
+#
+# 🟡 MEDIUM: methodology gap that tightens but doesn't move Base ROI tier.
+#    HONEST-LOW ROI COMMENTARY LIVES HERE.
+#    → does NOT block APPROVE
+#    Examples: "Pure ROI 0.15x — Priority Score deprioritizes",
+#    "cost-avoidance share 35% — consider Hospital/System split for clarity",
+#    "Best:Worst spread is wide"
+#
+# 🟢 LOW: polish, labels, secondary metrics
+#    → does NOT block APPROVE
+#    Examples: rename driver tree node, decision-tier emoji inconsistent,
+#    add post-launch tracking row
+#
+# ANTI-CONFIRMATION-BIAS BRIGHT LINE:
+# You MAY NOT mark "low ROI" as Critical or High. ROI being unfavorable is the
+# model working correctly. Mark Critical/High only if the ROI is wrong — i.e.,
+# you can point at the bug that, if fixed, would change the number.

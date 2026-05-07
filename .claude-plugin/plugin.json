@@ -1,0 +1,22 @@
+{
+  "name": "pe-roi-toolkit",
+  "version": "2.0.0",
+  "description": "Defendable per-feature ROI for Patient Engagement (PE) roadmaps. 4 skills covering the full lifecycle: build new features, adjust existing assumptions with cascade enforcement, deep-review with CFO + Head of Product personas, and maintain master rollup + Phase Plan. Driver-based bottom-up modeling, 3-scenario forecasting, web-research-validated CFs with TH discount, anti-confirmation-bias whitelist for auto-fixes. Optimized to ~37% lower token cost vs single-skill v1 while preserving 71% bug-catch rate.",
+  "author": {
+    "name": "Kim (BU PE)",
+    "email": "doltharit@senestia.com"
+  },
+  "keywords": [
+    "roi",
+    "business-case",
+    "product-management",
+    "healthcare",
+    "patient-engagement",
+    "cagan",
+    "cfo-review",
+    "phase-plan",
+    "kill-defer-decision"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/your-org/pe-roi-toolkit"
+}
